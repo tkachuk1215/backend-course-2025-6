@@ -93,6 +93,14 @@ app.post("/register", upload.single("photo"), (req, res) => {
 });
 
 // =====================
+// GET /inventory
+// =====================
+app.get("/inventory", (req, res) => {
+  const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+  res.status(200).json(items);
+});
+
+// =====================
 // HTTP Server
 // =====================
 const server = http.createServer(app);
