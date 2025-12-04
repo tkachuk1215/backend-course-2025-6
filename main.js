@@ -101,6 +101,23 @@ app.get("/inventory", (req, res) => {
 });
 
 // =====================
+// GET /inventory/:id
+// =====================
+app.get("/inventory/:id", (req, res) => {
+  const id = req.params.id;
+
+  const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  const item = items.find(x => x.id === id);
+
+  if (!item) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  res.status(200).json(item);
+});
+
+// =====================
 // HTTP Server
 // =====================
 const server = http.createServer(app);
