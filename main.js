@@ -40,6 +40,7 @@ if (!fs.existsSync(DATA_FILE)) {
 const app = express();
 
 app.use(express.static(__dirname));
+app.use(express.json());
 
 // =====================
 // Multer для фото
@@ -115,6 +116,35 @@ app.get("/inventory/:id", (req, res) => {
   }
 
   res.status(200).json(item);
+});
+
+// =====================
+// PUT /inventory/:id
+// =====================
+app.put("/inventory/:id", (req, res) => {
+  const id = req.params.id;
+  const { name, description } = req.body;
+
+  const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  const itemIndex = items.findIndex(x => x.id === id);
+
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  // Оновлюємо тільки те, що передали
+  if (name !== undefined) {
+    items[itemIndex].name = name;
+  }
+
+  if (description !== undefined) {
+    items[itemIndex].description = description;
+  }
+
+  fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2));
+
+  res.status(200).json(items[itemIndex]);
 });
 
 // =====================
