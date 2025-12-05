@@ -4,6 +4,8 @@ const path = require("path");
 const http = require("http");
 const express = require("express");
 const multer = require("multer");
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
 
 // =====================
 // Commander (з Частини 1)
@@ -67,6 +69,41 @@ const upload = multer({ storage });
 // =====================
 // POST /register
 // =====================
+
+/**
+ * @swagger
+ * /register:
+ *   post:
+ *     summary: Реєстрація нового предмета
+ *     description: Додає новий предмет до інвентаря з назвою, описом та необовʼязковим фото.
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - inventory_name
+ *             properties:
+ *               inventory_name:
+ *                 type: string
+ *                 description: Назва предмета
+ *               description:
+ *                 type: string
+ *                 description: Опис предмета
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *                 description: Фото предмета
+ *     responses:
+ *       201:
+ *         description: Предмет успішно створено
+ *       400:
+ *         description: Не передано назву предмета
+ */
+
 app.post("/register", upload.single("photo"), (req, res) => {
   const inventoryName = req.body.inventory_name;
   const description = req.body.description || "";
@@ -97,6 +134,18 @@ app.post("/register", upload.single("photo"), (req, res) => {
 // =====================
 // GET /inventory
 // =====================
+
+/**
+ * @swagger
+ * /inventory:
+ *   get:
+ *     summary: Отримати весь інвентар
+ *     description: Повертає список усіх предметів інвентаря.
+ *     responses:
+ *       200:
+ *         description: Успішне отримання списку
+ */
+
 app.get("/inventory", (req, res) => {
   const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
   res.status(200).json(items);
@@ -105,6 +154,27 @@ app.get("/inventory", (req, res) => {
 // =====================
 // GET /inventory/:id
 // =====================
+
+/**
+ * @swagger
+ * /inventory/{id}:
+ *   get:
+ *     summary: Отримати предмет за ID
+ *     description: Повертає один предмет інвентаря за його унікальним ідентифікатором.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID предмета
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Предмет знайдено
+ *       404:
+ *         description: Предмет не знайдено
+ */
+
 app.get("/inventory/:id", (req, res) => {
   const id = req.params.id;
 
@@ -122,6 +192,40 @@ app.get("/inventory/:id", (req, res) => {
 // =====================
 // PUT /inventory/:id
 // =====================
+
+/**
+ * @swagger
+ * /inventory/{id}:
+ *   put:
+ *     summary: Оновити предмет інвентаря
+ *     description: Оновлює назву та/або опис предмета.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID предмета
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Нова назва
+ *               description:
+ *                 type: string
+ *                 description: Новий опис
+ *     responses:
+ *       200:
+ *         description: Предмет оновлено
+ *       404:
+ *         description: Предмет не знайдено
+ */
+
 app.put("/inventory/:id", (req, res) => {
   const id = req.params.id;
   const { name, description } = req.body;
@@ -151,6 +255,27 @@ app.put("/inventory/:id", (req, res) => {
 // =====================
 // GET /inventory/:id/photo
 // =====================
+
+/**
+ * @swagger
+ * /inventory/{id}/photo:
+ *   get:
+ *     summary: Отримати фото предмета
+ *     description: Повертає зображення предмета за його ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID предмета
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Фото успішно отримано
+ *       404:
+ *         description: Фото або предмет не знайдено
+ */
+
 app.get("/inventory/:id/photo", (req, res) => {
   const id = req.params.id;
 
@@ -176,12 +301,48 @@ app.get("/inventory/:id/photo", (req, res) => {
   }
 
   // Відправляємо файл
+  res.setHeader("Content-Type", "image/jpeg");
   res.status(200).sendFile(photoPath);
 });
 
 // =====================
 // PUT /inventory/:id/photo
 // =====================
+
+/**
+ * @swagger
+ * /inventory/{id}/photo:
+ *   put:
+ *     summary: Оновити фото предмета
+ *     description: Завантажує нове фото для предмета.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID предмета
+ *         schema:
+ *           type: string
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - photo
+ *             properties:
+ *               photo:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Фото оновлено
+ *       404:
+ *         description: Предмет не знайдено
+ */
+
 app.put("/inventory/:id/photo", upload.single("photo"), (req, res) => {
   const id = req.params.id;
 
@@ -220,6 +381,27 @@ app.put("/inventory/:id/photo", upload.single("photo"), (req, res) => {
 // =====================
 // DELETE /inventory/:id
 // =====================
+
+/**
+ * @swagger
+ * /inventory/{id}:
+ *   delete:
+ *     summary: Видалити предмет інвентаря
+ *     description: Видаляє предмет та його фото.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID предмета
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Предмет видалено
+ *       404:
+ *         description: Предмет не знайдено
+ */
+
 app.delete("/inventory/:id", (req, res) => {
   const id = req.params.id;
 
@@ -253,28 +435,85 @@ app.delete("/inventory/:id", (req, res) => {
 // =====================
 // POST /search (by ID)
 // =====================
+
+/**
+ * @swagger
+ * /search:
+ *   post:
+ *     summary: Пошук предмета за ID
+ *     description: Повертає предмет за його ідентифікатором.
+ *     consumes:
+ *       - application/x-www-form-urlencoded
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - id
+ *             properties:
+ *               id:
+ *                 type: string
+ *               has_photo:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Предмет знайдено
+ *       404:
+ *         description: Предмет не знайдено
+ */
+
 app.post("/search", (req, res) => {
-  // ✅ Захист від undefined
-  if (!req.body) {
-    return res.status(400).json({ error: "No form data received" });
-  }
+  const { id, has_photo } = req.body || {};
 
-  const id = req.body.id;
-
+  // ID обов'язковий
   if (!id || id.trim() === "") {
     return res.status(400).json({ error: "ID is required" });
   }
 
   const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-
   const item = items.find(x => x.id === id);
 
+  // Якщо річ не знайдена — 404 (за ТЗ)
   if (!item) {
-    return res.status(200).json([]);
+    return res.status(404).json({ error: "Not found" });
   }
 
-  res.status(200).json([item]);
+  // Копія об'єкта, щоб не ламати оригінал у файлі
+  const result = { ...item };
+
+  // has_photo приходить з форми як "on" або не приходить взагалі
+  const hasPhotoFlag =
+    typeof has_photo !== "undefined" &&
+    has_photo !== "false" &&
+    has_photo !== "0";
+
+  if (hasPhotoFlag) {
+    const photoUrl = `/inventory/${id}/photo`;
+    result.description = (result.description || "") + `\nPhoto: ${photoUrl}`;
+  }
+
+  // Успішна відповідь — 200 і один об'єкт, а не масив
+  return res.status(200).json(result);
 });
+
+// =====================
+// SWAGGER
+// =====================
+const swaggerSpec = swaggerJsdoc({
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Сервіс інвентаря",
+      version: "1.0.0",
+      description: "Swagger-документація для лабораторної роботи №6"
+    },
+  },
+  apis: [__filename],
+});
+
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // =====================
 // HTTP Server
@@ -284,3 +523,4 @@ const server = http.createServer(app);
 server.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}`);
 });
+
