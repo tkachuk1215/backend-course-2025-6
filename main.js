@@ -179,6 +179,44 @@ app.get("/inventory/:id/photo", (req, res) => {
 });
 
 // =====================
+// PUT /inventory/:id/photo
+// =====================
+app.put("/inventory/:id/photo", upload.single("photo"), (req, res) => {
+  const id = req.params.id;
+
+  // Фото обовʼязкове
+  if (!req.file) {
+    return res.status(400).json({ error: "Photo is required" });
+  }
+
+  const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  const itemIndex = items.findIndex(x => x.id === id);
+
+  // Якщо предмет не знайдено
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  const oldPhoto = items[itemIndex].photo;
+
+  // Якщо було старе фото — видаляємо його
+  if (oldPhoto) {
+    const oldPhotoPath = path.join(CACHE_DIR, "photos", oldPhoto);
+    if (fs.existsSync(oldPhotoPath)) {
+      fs.unlinkSync(oldPhotoPath);
+    }
+  }
+
+  // Записуємо нове фото
+  items[itemIndex].photo = req.file.filename;
+
+  fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2));
+
+  res.status(200).json(items[itemIndex]);
+});
+
+// =====================
 // HTTP Server
 // =====================
 const server = http.createServer(app);
