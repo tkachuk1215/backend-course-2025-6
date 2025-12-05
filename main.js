@@ -41,6 +41,7 @@ const app = express();
 
 app.use(express.static(__dirname));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // =====================
 // Multer для фото
@@ -247,6 +248,32 @@ app.delete("/inventory/:id", (req, res) => {
   fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2));
 
   res.status(200).json(deletedItem);
+});
+
+// =====================
+// POST /search (by ID)
+// =====================
+app.post("/search", (req, res) => {
+  // ✅ Захист від undefined
+  if (!req.body) {
+    return res.status(400).json({ error: "No form data received" });
+  }
+
+  const id = req.body.id;
+
+  if (!id || id.trim() === "") {
+    return res.status(400).json({ error: "ID is required" });
+  }
+
+  const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  const item = items.find(x => x.id === id);
+
+  if (!item) {
+    return res.status(200).json([]);
+  }
+
+  res.status(200).json([item]);
 });
 
 // =====================
