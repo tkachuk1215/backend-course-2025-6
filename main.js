@@ -217,6 +217,39 @@ app.put("/inventory/:id/photo", upload.single("photo"), (req, res) => {
 });
 
 // =====================
+// DELETE /inventory/:id
+// =====================
+app.delete("/inventory/:id", (req, res) => {
+  const id = req.params.id;
+
+  const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  const itemIndex = items.findIndex(x => x.id === id);
+
+  // Якщо предмет не знайдено
+  if (itemIndex === -1) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  const deletedItem = items[itemIndex];
+
+  // Видаляємо фото, якщо воно є
+  if (deletedItem.photo) {
+    const photoPath = path.join(CACHE_DIR, "photos", deletedItem.photo);
+    if (fs.existsSync(photoPath)) {
+      fs.unlinkSync(photoPath);
+    }
+  }
+
+  // Видаляємо сам запис
+  items.splice(itemIndex, 1);
+
+  fs.writeFileSync(DATA_FILE, JSON.stringify(items, null, 2));
+
+  res.status(200).json(deletedItem);
+});
+
+// =====================
 // HTTP Server
 // =====================
 const server = http.createServer(app);
