@@ -148,6 +148,37 @@ app.put("/inventory/:id", (req, res) => {
 });
 
 // =====================
+// GET /inventory/:id/photo
+// =====================
+app.get("/inventory/:id/photo", (req, res) => {
+  const id = req.params.id;
+
+  const items = JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
+
+  const item = items.find(x => x.id === id);
+
+  // Якщо предмет не знайдено
+  if (!item) {
+    return res.status(404).json({ error: "Not found" });
+  }
+
+  // Якщо фото відсутнє
+  if (!item.photo) {
+    return res.status(404).json({ error: "Photo not found" });
+  }
+
+  const photoPath = path.join(CACHE_DIR, "photos", item.photo);
+
+  // Якщо файл фізично не існує
+  if (!fs.existsSync(photoPath)) {
+    return res.status(404).json({ error: "Photo file missing" });
+  }
+
+  // Відправляємо файл
+  res.status(200).sendFile(photoPath);
+});
+
+// =====================
 // HTTP Server
 // =====================
 const server = http.createServer(app);
